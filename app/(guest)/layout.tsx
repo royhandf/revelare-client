@@ -25,7 +25,7 @@ export default function GuestLayout({
                 Sign Up
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/signin">
               <Button className="bg-violet-600 hover:bg-violet-700">
                 Sign In
               </Button>

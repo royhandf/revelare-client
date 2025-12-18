@@ -80,35 +80,35 @@ export default function BooksPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Daftar Buku</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Book List</h1>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="bg-violet-600 hover:bg-violet-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Tambah Buku
+              Add Book
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold text-gray-900">
-                Tambah Buku Baru
+                Add New Book
               </DialogTitle>
             </DialogHeader>
             <form className="grid grid-cols-2 gap-6 mt-4">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Judul</Label>
+                  <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
-                    placeholder="cth: Ekonomi Digital Indonesia"
+                    placeholder="e.g., Digital Economics"
                     className="mt-1.5"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="authors">Penulis</Label>
+                  <Label htmlFor="authors">Authors</Label>
                   <Input
                     id="authors"
-                    placeholder="cth: Budi Santoso; Sumarsono"
+                    placeholder="e.g., John Doe; Jane Smith"
                     className="mt-1.5"
                   />
                 </div>
@@ -116,32 +116,36 @@ export default function BooksPage() {
                   <Label htmlFor="editors">Editor</Label>
                   <Input
                     id="editors"
-                    placeholder="cth: Ahmad Yani; Budi Santoso"
+                    placeholder="e.g., Michael Brown; Sarah Lee"
                     className="mt-1.5"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="publisher">Penerbit</Label>
+                  <Label htmlFor="publisher">Publisher</Label>
                   <Input
                     id="publisher"
-                    placeholder="cth: Gramedia Pustaka"
+                    placeholder="e.g., Springer Nature"
                     className="mt-1.5"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="year">Tahun Terbit</Label>
-                  <Input id="year" placeholder="cth: 2024" className="mt-1.5" />
+                  <Label htmlFor="year">Publication Year</Label>
+                  <Input
+                    id="year"
+                    placeholder="e.g., 2024"
+                    className="mt-1.5"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="isbn">ISBN</Label>
                   <Input
                     id="isbn"
-                    placeholder="cth: 978-602-03-1234-5"
+                    placeholder="e.g., 978-3-16-148410-0"
                     className="mt-1.5"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="bookFile">File Buku</Label>
+                  <Label htmlFor="bookFile">Book File</Label>
                   <Input
                     id="bookFile"
                     type="file"
@@ -150,7 +154,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="coverImage">Gambar Sampul</Label>
+                  <Label htmlFor="coverImage">Cover Image</Label>
                   <Input
                     id="coverImage"
                     type="file"
@@ -161,18 +165,18 @@ export default function BooksPage() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="description">Deskripsi</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Tulis deskripsi buku di sini"
+                    placeholder="Write book description here"
                     className="mt-1.5 min-h-[180px] resize-none"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="toc">Daftar Isi</Label>
+                  <Label htmlFor="toc">Table of Contents</Label>
                   <Textarea
                     id="toc"
-                    placeholder="Tulis daftar isi di sini"
+                    placeholder="Write table of contents here"
                     className="mt-1.5 min-h-[180px] resize-y"
                   />
                 </div>
@@ -180,14 +184,14 @@ export default function BooksPage() {
               <div className="col-span-2 flex justify-end gap-2 pt-4">
                 <DialogTrigger asChild>
                   <Button type="button" variant="outline">
-                    Kembali
+                    Cancel
                   </Button>
                 </DialogTrigger>
                 <Button
                   type="submit"
                   className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
-                  Simpan
+                  Save
                 </Button>
               </div>
             </form>
@@ -199,7 +203,7 @@ export default function BooksPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="text"
-          placeholder="Cari berdasarkan judul, penulis, atau editor..."
+          placeholder="Search by title, author, or editor..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 bg-white border-gray-200 focus-visible:ring-violet-600"
@@ -214,22 +218,22 @@ export default function BooksPage() {
                 NO
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                BUKU
+                BOOK
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                PENULIS
+                AUTHOR
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
                 EDITOR
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                PENERBIT
+                PUBLISHER
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                TANGGAL TERBIT
+                PUBLICATION DATE
               </TableHead>
               <TableHead className="font-semibold text-gray-700 text-center">
-                AKSI
+                ACTION
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -239,7 +243,7 @@ export default function BooksPage() {
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Search className="h-10 w-10 text-gray-300" />
-                    <p className="text-gray-500">Tidak ada buku ditemukan</p>
+                    <p className="text-gray-500">No books found</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -282,7 +286,7 @@ export default function BooksPage() {
                           <Button
                             size="icon"
                             className="h-7 w-7 bg-blue-500 hover:bg-blue-600 text-white"
-                            title="Detail buku"
+                            title="Book details"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
@@ -290,7 +294,7 @@ export default function BooksPage() {
                         <DialogContent className="max-w-lg">
                           <DialogHeader>
                             <DialogTitle className="text-lg font-semibold text-gray-900">
-                              Detail Buku
+                              Book Details
                             </DialogTitle>
                           </DialogHeader>
                           <div className="flex gap-4 mt-2">
@@ -319,7 +323,7 @@ export default function BooksPage() {
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">
-                                Deskripsi
+                                Description
                               </h4>
                               <p className="text-gray-700 text-sm leading-relaxed">
                                 {book.description}
@@ -327,7 +331,7 @@ export default function BooksPage() {
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">
-                                Daftar Isi
+                                Table of Contents
                               </h4>
                               <p className="text-gray-700 text-sm">
                                 {book.table_of_contents}
@@ -365,7 +369,7 @@ export default function BooksPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                             <Trash2 className="h-4 w-4 text-red-600" />
-                            <span>Hapus</span>
+                            <span>Delete</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -420,14 +424,14 @@ export default function BooksPage() {
         >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">
-              Edit Buku
+              Edit Book
             </DialogTitle>
           </DialogHeader>
           {editingBook && (
             <form className="grid grid-cols-2 gap-6 mt-4">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="edit-title">Judul</Label>
+                  <Label htmlFor="edit-title">Title</Label>
                   <Input
                     id="edit-title"
                     defaultValue={editingBook.title}
@@ -435,7 +439,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-authors">Penulis</Label>
+                  <Label htmlFor="edit-authors">Authors</Label>
                   <Input
                     id="edit-authors"
                     defaultValue={editingBook.author}
@@ -451,7 +455,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-publisher">Penerbit</Label>
+                  <Label htmlFor="edit-publisher">Publisher</Label>
                   <Input
                     id="edit-publisher"
                     defaultValue={editingBook.publisher}
@@ -459,7 +463,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-year">Tahun Terbit</Label>
+                  <Label htmlFor="edit-year">Publication Year</Label>
                   <Input
                     id="edit-year"
                     defaultValue={editingBook.published}
@@ -475,7 +479,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-bookFile">File Buku</Label>
+                  <Label htmlFor="edit-bookFile">Book File</Label>
                   <Input
                     id="edit-bookFile"
                     type="file"
@@ -484,7 +488,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-coverImage">Gambar Sampul</Label>
+                  <Label htmlFor="edit-coverImage">Cover Image</Label>
                   <Input
                     id="edit-coverImage"
                     type="file"
@@ -495,7 +499,7 @@ export default function BooksPage() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="edit-description">Deskripsi</Label>
+                  <Label htmlFor="edit-description">Description</Label>
                   <Textarea
                     id="edit-description"
                     defaultValue={editingBook.description}
@@ -503,7 +507,7 @@ export default function BooksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-toc">Daftar Isi</Label>
+                  <Label htmlFor="edit-toc">Table of Contents</Label>
                   <Textarea
                     id="edit-toc"
                     defaultValue={editingBook.table_of_contents}
@@ -517,13 +521,13 @@ export default function BooksPage() {
                   variant="outline"
                   onClick={() => setEditingBook(null)}
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
-                  Simpan Perubahan
+                  Save Changes
                 </Button>
               </div>
             </form>

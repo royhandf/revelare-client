@@ -33,12 +33,12 @@ const navItems = [
     href: "/dashboard",
   },
   {
-    name: "Daftar Buku",
-    href: "/dashboard/daftar-buku",
+    name: "Book List",
+    href: "/dashboard/book-list",
   },
   {
-    name: "Daftar Pengguna",
-    href: "/dashboard/daftar-pengguna",
+    name: "User List",
+    href: "/dashboard/user-list",
   },
 ];
 

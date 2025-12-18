@@ -25,19 +25,19 @@ export default function Home() {
     params.set("q", searchQuery);
     if (scenario) params.set("scenario", scenario);
 
-    router.push(`/buku?${params.toString()}`);
+    router.push(`/book?${params.toString()}`);
   };
 
   return (
     <div className="flex h-[calc(100vh-150px)] items-center justify-center">
       <div className="flex w-full max-w-3xl flex-col items-center px-6">
         <h1 className="mb-4 text-center text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
-          Temukan Buku <span className="text-violet-600">Favoritmu</span>
+          Find Your <span className="text-violet-600">Favorite Book</span>
         </h1>
 
         <p className="mb-8 max-w-xl text-center text-gray-500">
-          Jelajahi koleksi perpustakaan dengan pencarian semantik. Ketik judul
-          atau topik yang kamu inginkan.
+          Explore the library collection with semantic search. Type a title or
+          topic you are looking for.
         </p>
 
         <div className="flex w-full max-w-2xl items-center overflow-hidden rounded-[16px] border border-gray-200 bg-white shadow-sm">
@@ -49,8 +49,8 @@ export default function Home() {
               <SelectItem value="3">3 Terms TF-IDF</SelectItem>
               <SelectItem value="5">5 Terms TF-IDF</SelectItem>
               <SelectItem value="10">10 Terms TF-IDF</SelectItem>
-              <SelectItem value="0">Tanpa TF-IDF</SelectItem>
-              <SelectItem value="-1">Tanpa Semantik</SelectItem>
+              <SelectItem value="0">Without TF-IDF</SelectItem>
+              <SelectItem value="-1">Without Semantic</SelectItem>
             </SelectContent>
           </Select>
 
@@ -58,7 +58,7 @@ export default function Home() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan judul atau topik ..."
+            placeholder="Search by title or topic..."
             className="h-12 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0"
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />

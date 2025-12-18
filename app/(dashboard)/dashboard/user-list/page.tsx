@@ -59,14 +59,14 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Daftar User</h1>
+        <h1 className="text-2xl font-bold text-gray-900">User List</h1>
       </div>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="text"
-          placeholder="Cari pengguna..."
+          placeholder="Search users..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 bg-white border-gray-200 focus-visible:ring-violet-600"
@@ -81,7 +81,7 @@ export default function UsersPage() {
                 NO
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                NAMA
+                NAME
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
                 EMAIL
@@ -90,10 +90,10 @@ export default function UsersPage() {
                 ROLE
               </TableHead>
               <TableHead className="font-semibold text-gray-700">
-                TANGGAL DAFTAR
+                REGISTERED DATE
               </TableHead>
               <TableHead className="font-semibold text-gray-700 text-center">
-                AKSI
+                ACTION
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -103,9 +103,7 @@ export default function UsersPage() {
                 <TableCell colSpan={6} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Search className="h-10 w-10 text-gray-300" />
-                    <p className="text-gray-500">
-                      Tidak ada pengguna ditemukan
-                    </p>
+                    <p className="text-gray-500">No users found</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -210,7 +208,7 @@ export default function UsersPage() {
           {editingUser && (
             <form className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="edit-name">Nama</Label>
+                <Label htmlFor="edit-name">Name</Label>
                 <Input
                   id="edit-name"
                   defaultValue={editingUser.name}
@@ -232,13 +230,13 @@ export default function UsersPage() {
                   variant="outline"
                   onClick={() => setEditingUser(null)}
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
-                  Simpan Perubahan
+                  Save Changes
                 </Button>
               </div>
             </form>

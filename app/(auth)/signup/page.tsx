@@ -18,7 +18,7 @@ export default function SignUpPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Password tidak sama!");
+      alert("Passwords do not match!");
       return;
     }
 
@@ -34,22 +34,24 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-violet-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gray-200 shadow-lg">
         <CardHeader className="space-y-2 pb-6 pt-8">
-          <CardTitle className="text-2xl text-center">Buat akun baru</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            Create a new account
+          </CardTitle>
           <p className="text-sm text-gray-500 text-center">
-            Daftar ke{" "}
-            <span className="font-semibold text-violet-600">Revelare</span>{" "}
-            untuk memulai
+            Sign up to{" "}
+            <span className="font-semibold text-violet-600">Revelare</span> to
+            get started
           </p>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nama Lengkap</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="Asep Asoy"
+                placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -84,7 +86,7 @@ export default function SignUpPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -106,9 +108,9 @@ export default function SignUpPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Sudah punya akun?{" "}
+            Already have an account?{" "}
             <Link
-              href="/login"
+              href="/signin"
               className="font-medium text-violet-600 hover:text-violet-700 hover:underline"
             >
               Sign In

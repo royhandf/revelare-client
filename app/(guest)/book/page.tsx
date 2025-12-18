@@ -12,12 +12,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import Link from "next/link";
 import Image from "next/image";
 
 const mockBooks = [
   {
-    average_similarity: 0.6990130317861409,
+    average_similarity: 0.8990130317861409,
     cover:
       "https://library.oapen.org/bitstream/20.500.12657/91093/2/9780472904532.pdf.jpg",
     id: 68286,
@@ -76,28 +84,11 @@ const mockBooks = [
 
 function SimilarityBadge({ value }: { value: number }) {
   const percentage = (value * 100).toFixed(0);
-  const getLabel = () => {
-    if (value >= 0.7)
-      return {
-        text: "Sangat Relevan",
-        color: "text-green-700 bg-green-50 border-green-200",
-      };
-    if (value >= 0.5)
-      return {
-        text: "Relevan",
-        color: "text-violet-700 bg-violet-50 border-violet-200",
-      };
-    return {
-      text: "Cukup Relevan",
-      color: "text-gray-700 bg-gray-50 border-gray-200",
-    };
-  };
-  const label = getLabel();
 
   return (
     <div className="flex items-center justify-between mt-2.5">
-      <span className={`text-xs px-2 py-1 rounded-md border ${label.color}`}>
-        {label.text}
+      <span className="text-xs px-2 py-1 rounded-md border text-violet-700 bg-violet-50 border-violet-200">
+        Similarity
       </span>
       <span className="text-lg font-semibold text-violet-600">
         {percentage}%
@@ -110,9 +101,18 @@ export default function BookListPage() {
   const [scenario, setScenario] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [books] = useState(mockBooks);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const totalPages = Math.ceil(books.length / itemsPerPage);
+  const paginatedBooks = books.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleSearch = () => {
     console.log("Searching:", { scenario, searchQuery });
+    setCurrentPage(1);
   };
 
   return (
@@ -128,8 +128,8 @@ export default function BookListPage() {
                 <SelectItem value="3">3 Terms TF-IDF</SelectItem>
                 <SelectItem value="5">5 Terms TF-IDF</SelectItem>
                 <SelectItem value="10">10 Terms TF-IDF</SelectItem>
-                <SelectItem value="0">Tanpa TF-IDF</SelectItem>
-                <SelectItem value="-1">Tanpa Semantik</SelectItem>
+                <SelectItem value="0">Without TF-IDF</SelectItem>
+                <SelectItem value="-1">Without Semantic</SelectItem>
               </SelectContent>
             </Select>
 
@@ -137,7 +137,7 @@ export default function BookListPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari berdasarkan judul atau topik ..."
+              placeholder="Search by title or topic..."
               className="h-12 flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0"
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
@@ -154,9 +154,9 @@ export default function BookListPage() {
 
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Hasil Pencarian{" "}
+            Search Results{" "}
             <span className="text-gray-500 font-normal">
-              ({books.length} buku ditemukan)
+              ({books.length} books found)
             </span>
           </h2>
         </div>
@@ -167,16 +167,16 @@ export default function BookListPage() {
               <BookX className="h-8 w-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Tidak ada hasil ditemukan
+              No results found
             </h3>
             <p className="text-gray-500 max-w-md">
-              Coba gunakan kata kunci yang berbeda atau ubah skenario pencarian.
+              Try using different keywords or change the search scenario.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {books.map((book) => (
-              <Link href={`/buku/${book.id}`} key={book.id} className="group">
+            {paginatedBooks.map((book) => (
+              <Link href={`/book/${book.id}`} key={book.id} className="group">
                 <Card className="h-full overflow-hidden border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all cursor-pointer">
                   <div className="h-64 bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-3">
                     <Image
@@ -201,6 +201,59 @@ export default function BookListPage() {
               </Link>
             ))}
           </div>
+        )}
+
+        {books.length > 0 && totalPages > 1 && (
+          <Pagination className="mt-8">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === page}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(page);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages)
+                      setCurrentPage(currentPage + 1);
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </main>
     </div>

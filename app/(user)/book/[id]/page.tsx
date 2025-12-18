@@ -128,11 +128,11 @@ export default function BookDetailPage() {
     <div className="min-h-screen bg-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link
-          href="/buku"
+          href="/book"
           className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm mb-8 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali
+          Back
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -142,7 +142,7 @@ export default function BookDetailPage() {
             </h1>
 
             <p className="text-gray-600 mb-6">
-              oleh{" "}
+              by{" "}
               <span className="font-semibold text-gray-800">
                 {mockBook.author}
               </span>
@@ -150,7 +150,7 @@ export default function BookDetailPage() {
 
             <div className="mb-8">
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Deskripsi
+                Description
               </h2>
               <p className="text-gray-600 leading-relaxed">
                 {mockBook.description}
@@ -224,7 +224,9 @@ export default function BookDetailPage() {
         </div>
 
         <section className="mt-16 pt-10 border-t border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">Buku Serupa</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">
+            Similar Books
+          </h2>
           <Swiper
             modules={[Autoplay, FreeMode]}
             spaceBetween={16}
@@ -251,7 +253,7 @@ export default function BookDetailPage() {
           >
             {similarBooks.map((book) => (
               <SwiperSlide key={book.id}>
-                <Link href={`/buku/${book.id}`} className="block group">
+                <Link href={`/book/${book.id}`} className="block group">
                   <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors border border-gray-100">
                     <div className="aspect-[3/4] flex items-center justify-center mb-3">
                       <Image
@@ -259,7 +261,7 @@ export default function BookDetailPage() {
                         alt={book.title}
                         width={100}
                         height={150}
-                        className="max-h-full w-auto rounded shadow-sm group-hover:shadow-md transition-shadow"
+                        className="w-auto h-28 md:h-32 rounded shadow-sm group-hover:shadow-md transition-shadow"
                       />
                     </div>
                     <h3 className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-violet-600 transition-colors">
@@ -267,7 +269,7 @@ export default function BookDetailPage() {
                     </h3>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs px-2 py-0.5 rounded border border-violet-300 text-violet-600">
-                        Relevan
+                        Similarity
                       </span>
                       <span className="text-sm font-medium text-gray-600">
                         {book.relevance}%

@@ -27,13 +27,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-violet-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gray-200 shadow-lg">
         <CardHeader className="space-y-2 pb-6 pt-8">
-          <CardTitle className="text-2xl text-center">
-            Selamat datang kembali
-          </CardTitle>
+          <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
           <p className="text-sm text-gray-500 text-center">
-            Masuk ke{" "}
-            <span className="font-semibold text-violet-600">Revelare</span>{" "}
-            untuk melanjutkan
+            Sign in to{" "}
+            <span className="font-semibold text-violet-600">Revelare</span> to
+            continue
           </p>
         </CardHeader>
 
@@ -59,7 +57,7 @@ export default function LoginPage() {
                   href="/forgot-password"
                   className="text-xs text-violet-600 hover:text-violet-700 hover:underline"
                 >
-                  Lupa password?
+                  Forgot password?
                 </Link>
               </div>
               <Input
@@ -83,7 +81,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Belum punya akun?{" "}
+            Don't have an account?{" "}
             <Link
               href="/signup"
               className="font-medium text-violet-600 hover:text-violet-700 hover:underline"

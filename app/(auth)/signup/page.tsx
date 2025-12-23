@@ -1,37 +1,56 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authService } from "@/lib/services/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export default function SignUpPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
       return;
     }
 
     setIsLoading(true);
-    console.log("Sign Up:", { name, email, password });
+    try {
+      const { name, email, password } = formData;
+      await authService.register({ name, email, password });
 
-    setTimeout(() => {
+      toast.success("Registration successful! Redirecting to sign in...");
+      router.push("/signin");
+    } catch (error: unknown) {
+      toast.error("Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-violet-50 flex items-center justify-center p-4">
+    <div className="min-h-screen from-violet-50 via-white to-violet-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gray-200 shadow-lg">
         <CardHeader className="space-y-2 pb-6 pt-8">
           <CardTitle className="text-2xl text-center">
@@ -51,9 +70,9 @@ export default function SignUpPage() {
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Asep Asoy"
+                value={formData.name}
+                onChange={handleChange}
                 required
                 className="h-11"
               />
@@ -65,8 +84,8 @@ export default function SignUpPage() {
                 id="email"
                 type="email"
                 placeholder="asep.asoy@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 required
                 className="h-11"
               />
@@ -78,8 +97,8 @@ export default function SignUpPage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
                 className="h-11"
               />
@@ -91,8 +110,8 @@ export default function SignUpPage() {
                 id="confirmPassword"
                 type="password"
                 placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 required
                 className="h-11"
               />

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,10 +22,7 @@ interface DashboardLayoutProps {
 
 const userName = "Royhan Daffa";
 const userEmail = "admin-semantic@revelare.com";
-const initials = userName
-  .split(" ")
-  .map((n) => n[0])
-  .join("");
+const initials = getInitials(userName);
 
 const navItems = [
   {

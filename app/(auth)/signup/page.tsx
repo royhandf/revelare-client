@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { authService } from "@/lib/services/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { FcGoogle } from "react-icons/fc";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -49,10 +51,14 @@ export default function SignUpPage() {
     }
   };
 
+  const handleGoogleSignUp = () => {
+    signIn("google", { callbackUrl: "/" });
+  };
+
   return (
-    <div className="min-h-screen from-violet-50 via-white to-violet-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gray-200 shadow-lg">
-        <CardHeader className="space-y-2 pb-6 pt-8">
+        <CardHeader className="space-y-2 pt-8">
           <CardTitle className="text-2xl text-center">
             Create a new account
           </CardTitle>
@@ -64,6 +70,25 @@ export default function SignUpPage() {
         </CardHeader>
 
         <CardContent>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-11 mb-4 border-gray-300 hover:bg-gray-50"
+            onClick={handleGoogleSignUp}
+          >
+            <FcGoogle className="w-5 h-5 mr-2" />
+            Sign up with Google
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">or</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>

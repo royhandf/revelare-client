@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { FcGoogle } from "react-icons/fc";
+import { GoogleIcon } from "@/components/icons/google";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -76,7 +76,7 @@ export default function SignUpPage() {
             className="w-full h-11 mb-4 border-gray-300 hover:bg-gray-50"
             onClick={handleGoogleSignUp}
           >
-            <FcGoogle className="w-5 h-5 mr-2" />
+            <GoogleIcon className="w-5 h-5 mr-2" />
             Sign up with Google
           </Button>
 

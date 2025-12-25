@@ -26,10 +26,8 @@ export function Navbar() {
         </Link>
 
         {status === "loading" ? (
-          // Loading skeleton
           <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
         ) : session?.user ? (
-          // Authenticated: Show user dropdown
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 outline-none hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-medium">
@@ -70,7 +68,6 @@ export function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          // Guest: Show Sign Up / Sign In buttons
           <div className="flex items-center gap-3">
             <Link
               href="/signup"

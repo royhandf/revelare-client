@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FcGoogle } from "react-icons/fc";
+import { GoogleIcon } from "@/components/icons/google";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
             className="w-full h-11 mb-4 border-gray-300 hover:bg-gray-50"
             onClick={handleGoogleSignIn}
           >
-            <FcGoogle className="w-5 h-5 mr-2" />
+            <GoogleIcon className="w-5 h-5 mr-2" />
             Continue with Google
           </Button>
 

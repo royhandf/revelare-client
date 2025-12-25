@@ -165,7 +165,13 @@ export default function BookListPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {books.map((book) => (
-              <Link href={`/book/${book.id}`} key={book.id} className="group">
+              <Link
+                href={`/book/${book.id}?q=${encodeURIComponent(
+                  searchQuery
+                )}&scenario=${scenario}`}
+                key={book.id}
+                className="group"
+              >
                 <Card className="h-full overflow-hidden border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all cursor-pointer">
                   <div className="h-64 bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-3">
                     <Image

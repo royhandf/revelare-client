@@ -11,6 +11,22 @@ export interface Book {
   std_dev?: number;
 }
 
+export interface BookDetail {
+  id: number;
+  title: string;
+  authors: string;
+  editors: string;
+  description: string;
+  cover_link: string;
+  pdf_link: string;
+  publisher: string;
+  published: number;
+  language: string;
+  isbn: string;
+  subject: string;
+  table_of_contents: string;
+}
+
 export interface SearchBooksResponse {
   current_page: number;
   data: Book[];
@@ -26,6 +42,11 @@ export interface SearchBooksParams {
   page?: number;
 }
 
+export interface BookDetailResponse {
+  data: BookDetail;
+  status: string;
+}
+
 export const bookService = {
   search: async (params: SearchBooksParams): Promise<SearchBooksResponse> => {
     if (!BASE_URL) throw new Error("Server is not configured properly.");
@@ -38,6 +59,13 @@ export const bookService = {
       },
     });
 
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<BookDetailResponse> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    const response = await axios.get(`${BASE_URL}/api/books/${id}`);
     return response.data;
   },
 };

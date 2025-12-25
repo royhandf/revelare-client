@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Search, BookX } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Search, BookX, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,75 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import Link from "next/link";
 import Image from "next/image";
-
-const mockBooks = [
-  {
-    average_similarity: 0.8990130317861409,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/91093/2/9780472904532.pdf.jpg",
-    id: 68286,
-    similarity_count: 7,
-    title: "The Fundamentals of Campaign Finance in the U.S.",
-  },
-  {
-    average_similarity: 0.6104636591478697,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/59253/7/9780197655870_Print.pdf.jpg",
-    id: 75053,
-    similarity_count: 7,
-    title: "Public Law and Economics",
-  },
-  {
-    average_similarity: 0.605136926565498,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/102262/3/9781003852599.pdf.jpg",
-    id: 66522,
-    similarity_count: 7,
-    title: "Magnus the Lawmender's Laws of the Land",
-  },
-  {
-    average_similarity: 0.6033787640930498,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/59777/7/9781000823882.pdf.jpg",
-    id: 74008,
-    similarity_count: 7,
-    title: "Histories of Tax Evasion, Avoidance and Resistance",
-  },
-  {
-    average_similarity: 0.5996598639455782,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/94869/7/9781040273449.pdf.jpg",
-    id: 67377,
-    similarity_count: 7,
-    title: "Freedom of Expression and the Law in Russia",
-  },
-  {
-    average_similarity: 0.5935897435897436,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/64037/7/9780472903795.pdf.jpg",
-    id: 72521,
-    similarity_count: 7,
-    title: "In Defense of Free Speech in Universities",
-  },
-  {
-    average_similarity: 0.5552066980638408,
-    cover:
-      "https://library.oapen.org/bitstream/20.500.12657/94226/7/9781612498553.pdf.jpg",
-    id: 69675,
-    similarity_count: 7,
-    title: "The Ripple Effect",
-  },
-];
+import { bookService, Book } from "@/lib/services/book";
 
 function SimilarityBadge({ value }: { value: number }) {
   const percentage = (value * 100).toFixed(0);
@@ -98,21 +33,62 @@ function SimilarityBadge({ value }: { value: number }) {
 }
 
 export default function BookListPage() {
+  const searchParams = useSearchParams();
+
   const [scenario, setScenario] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [books] = useState(mockBooks);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
-  const totalPages = Math.ceil(books.length / itemsPerPage);
-  const paginatedBooks = books.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const fetchBooks = async (query: string, scenario: string, page: number) => {
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await bookService.search({
+        query,
+        scenario: scenario || undefined,
+        page,
+      });
+
+      setBooks(response.data);
+      setCurrentPage(response.current_page);
+      setTotalPages(response.total_pages);
+      setTotalResults(response.total_results);
+    } catch (err) {
+      setError("Gagal memuat hasil pencarian. Silakan coba lagi.");
+      setBooks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    const s = searchParams.get("scenario") || "";
+
+    setSearchQuery(q);
+    setScenario(s);
+
+    if (q) {
+      fetchBooks(q, s, 1);
+    }
+  }, [searchParams]);
 
   const handleSearch = () => {
-    console.log("Searching:", { scenario, searchQuery });
-    setCurrentPage(1);
+    if (!searchQuery.trim()) return;
+    fetchBooks(searchQuery, scenario, 1);
+  };
+
+  const handlePageChange = (page: number) => {
+    fetchBooks(searchQuery, scenario, page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -146,6 +122,7 @@ export default function BookListPage() {
               onClick={handleSearch}
               size="icon"
               className="h-12 w-12 rounded-none bg-violet-600 hover:bg-violet-700 cursor-pointer"
+              disabled={isLoading}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -156,12 +133,24 @@ export default function BookListPage() {
           <h2 className="text-lg font-semibold text-gray-900">
             Search Results{" "}
             <span className="text-gray-500 font-normal">
-              ({books.length} books found)
+              ({totalResults} books found)
             </span>
           </h2>
         </div>
 
-        {books.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <BookX className="h-8 w-8 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error</h3>
+            <p className="text-red-500 max-w-md">{error}</p>
+          </div>
+        ) : books.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <BookX className="h-8 w-8 text-gray-400" />
@@ -175,7 +164,7 @@ export default function BookListPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {paginatedBooks.map((book) => (
+            {books.map((book) => (
               <Link href={`/book/${book.id}`} key={book.id} className="group">
                 <Card className="h-full overflow-hidden border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all cursor-pointer">
                   <div className="h-64 bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-3">
@@ -204,56 +193,71 @@ export default function BookListPage() {
         )}
 
         {books.length > 0 && totalPages > 1 && (
-          <Pagination className="mt-8">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (currentPage > 1) setCurrentPage(currentPage - 1);
-                  }}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      href="#"
-                      isActive={currentPage === page}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(page);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                currentPage > 1 && handlePageChange(currentPage - 1)
+              }
+              disabled={currentPage === 1}
+              className="h-9 w-9 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {(() => {
+              const pages: (number | string)[] = [];
+
+              if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                pages.push(1);
+                if (currentPage > 3) pages.push("...");
+
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+                for (let i = start; i <= end; i++) pages.push(i);
+
+                if (currentPage < totalPages - 2) pages.push("...");
+                pages.push(totalPages);
+              }
+
+              return pages.map((page, idx) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">
+                    •••
+                  </span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "ghost"}
+                    size="icon"
+                    onClick={() => handlePageChange(page as number)}
+                    className={
+                      currentPage === page
+                        ? "h-9 w-9 bg-violet-600 text-white hover:bg-violet-700"
+                        : "h-9 w-9 hover:bg-violet-50 hover:text-violet-600"
+                    }
+                  >
+                    {page}
+                  </Button>
                 )
-              )}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (currentPage < totalPages)
-                      setCurrentPage(currentPage + 1);
-                  }}
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+              );
+            })()}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                currentPage < totalPages && handlePageChange(currentPage + 1)
+              }
+              disabled={currentPage === totalPages}
+              className="h-9 w-9 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </main>
     </div>

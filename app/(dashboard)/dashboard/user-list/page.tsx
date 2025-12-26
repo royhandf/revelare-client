@@ -19,7 +19,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Search, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,33 +27,69 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { userService, User, UnauthorizedError } from "@/lib/services/user";
 
-const usersData = [
-  {
-    id: 1,
-    name: "Royhan Daffa",
-    email: "admin@semantic-book.co.id",
-    role: "admin",
-    registeredDate: "27 Oct 2024",
-  },
-  {
-    id: 2,
-    name: "Daffa New",
-    email: "daffa@gmail.com",
-    role: "user",
-    registeredDate: "27 May 2025",
-  },
-];
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
-type User = (typeof usersData)[0];
+const ITEMS_PER_PAGE = 10;
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: session } = useSession();
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredUsers = usersData.filter((user) =>
+  const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!session?.user?.accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await userService.getAll(session.user.accessToken);
+        setUsers(response.data);
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          signOut({ callbackUrl: "/signin" });
+          return;
+        }
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
+  }, [session?.user?.accessToken]);
 
   return (
     <div className="space-y-6">
@@ -98,7 +133,16 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin h-5 w-5 border-2 border-violet-600 border-t-transparent rounded-full" />
+                    <span className="text-gray-500">Loading users...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
@@ -108,10 +152,10 @@ export default function UsersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user, index) => (
+              paginatedUsers.map((user, index) => (
                 <TableRow key={user.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium text-gray-900">
-                    {index + 1}
+                    {startIndex + index + 1}
                   </TableCell>
                   <TableCell className="text-gray-900 font-normal">
                     {user.name}
@@ -132,7 +176,7 @@ export default function UsersPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-gray-700">
-                    {user.registeredDate}
+                    {formatDate(user.created_at)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-1.5">
@@ -162,34 +206,65 @@ export default function UsersPage() {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          Showing {filteredUsers.length > 0 ? "1" : "0"} -{" "}
-          {filteredUsers.length} of {usersData.length}
+          Showing {filteredUsers.length > 0 ? startIndex + 1 : 0} -{" "}
+          {Math.min(startIndex + ITEMS_PER_PAGE, filteredUsers.length)} of{" "}
+          {filteredUsers.length}
         </div>
-        <Pagination className="w-auto mx-0 justify-end">
-          <PaginationContent className="gap-1">
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                className="h-8 text-sm cursor-not-allowed opacity-50"
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink
-                href="#"
-                isActive
-                className="h-8 w-8 text-sm bg-violet-600 text-white hover:bg-violet-700 border-violet-600"
-              >
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                className="h-8 text-sm cursor-not-allowed opacity-50"
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        {totalPages > 1 && (
+          <Pagination className="w-auto mx-0 justify-end">
+            <PaginationContent className="gap-1">
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage - 1);
+                  }}
+                  className={cn(
+                    "h-8 text-sm",
+                    currentPage === 1 &&
+                      "cursor-not-allowed opacity-50 pointer-events-none"
+                  )}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                      isActive={currentPage === page}
+                      className={cn(
+                        "h-8 w-8 text-sm",
+                        currentPage === page &&
+                          "bg-violet-600 text-white hover:bg-violet-700 border-violet-600"
+                      )}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage + 1);
+                  }}
+                  className={cn(
+                    "h-8 text-sm",
+                    currentPage === totalPages &&
+                      "cursor-not-allowed opacity-50 pointer-events-none"
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
       <Dialog

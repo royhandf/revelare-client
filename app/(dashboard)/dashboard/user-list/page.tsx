@@ -27,9 +27,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { userService, User, UnauthorizedError } from "@/lib/services/user";
+import { toast } from "sonner";
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -49,6 +60,12 @@ export default function UsersPage() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -68,6 +85,71 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
+    if (editingUser) {
+      setEditName(editingUser.name);
+      setEditEmail(editingUser.email);
+      setEditPassword("");
+    }
+  }, [editingUser]);
+
+  const refetchUsers = async () => {
+    if (!session?.user?.accessToken) return;
+    try {
+      const response = await userService.getAll(session.user.accessToken);
+      setUsers(response.data);
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+      }
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !session?.user?.accessToken) return;
+
+    setIsSubmitting(true);
+    try {
+      await userService.update(session.user.accessToken, editingUser.id, {
+        name: editName,
+        email: editEmail,
+        password: editPassword || undefined,
+      });
+      toast.success("User updated successfully");
+      setEditingUser(null);
+      refetchUsers();
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to update user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!session?.user?.accessToken || !deletingUser) return;
+
+    setIsDeleting(true);
+    try {
+      await userService.delete(session.user.accessToken, deletingUser.id);
+      toast.success("User deleted successfully");
+      setDeletingUser(null);
+      refetchUsers();
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to delete user");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  useEffect(() => {
     const fetchUsers = async () => {
       if (!session?.user?.accessToken) {
         setIsLoading(false);
@@ -83,7 +165,6 @@ export default function UsersPage() {
           signOut({ callbackUrl: "/signin" });
           return;
         }
-        console.error("Failed to fetch users:", error);
       } finally {
         setIsLoading(false);
       }
@@ -188,13 +269,16 @@ export default function UsersPage() {
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        size="icon"
-                        className="h-7 w-7 bg-red-500 hover:bg-red-600 text-white"
-                        title="Delete user"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      {user.role !== "admin" && (
+                        <Button
+                          size="icon"
+                          className="h-7 w-7 bg-red-500 hover:bg-red-600 text-white"
+                          title="Delete user"
+                          onClick={() => setDeletingUser(user)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -281,12 +365,13 @@ export default function UsersPage() {
             </DialogTitle>
           </DialogHeader>
           {editingUser && (
-            <form className="space-y-4 mt-4">
+            <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
               <div>
                 <Label htmlFor="edit-name">Name</Label>
                 <Input
                   id="edit-name"
-                  defaultValue={editingUser.name}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                   className="mt-1.5"
                 />
               </div>
@@ -295,7 +380,19 @@ export default function UsersPage() {
                 <Input
                   id="edit-email"
                   type="email"
-                  defaultValue={editingUser.email}
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-password">Password (optional)</Label>
+                <Input
+                  id="edit-password"
+                  type="password"
+                  placeholder="Leave empty to keep current"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
                   className="mt-1.5"
                 />
               </div>
@@ -309,15 +406,41 @@ export default function UsersPage() {
                 </Button>
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
-                  Save Changes
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deletingUser}
+        onOpenChange={(open) => !open && setDeletingUser(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete user &quot;{deletingUser?.name}
+              &quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

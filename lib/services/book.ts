@@ -119,4 +119,57 @@ export const bookService = {
       throw error;
     }
   },
+
+  dashboardCreate: async (
+    token: string,
+    formData: FormData
+  ): Promise<BookDetail> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/dashboard/books/create`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
+
+  dashboardUpdate: async (
+    token: string,
+    bookId: number,
+    formData: FormData
+  ): Promise<BookDetail> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/api/dashboard/books/edit/${bookId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
 };

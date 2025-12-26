@@ -32,6 +32,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -74,6 +75,33 @@ export default function BooksPage() {
   const [editingBook, setEditingBook] = useState<BookDetail | null>(null);
   const [deletingBook, setDeletingBook] = useState<BookDetail | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addForm, setAddForm] = useState({
+    title: "",
+    authors: "",
+    editors: "",
+    publisher: "",
+    published: "",
+    isbn: "",
+    description: "",
+    table_of_contents: "",
+  });
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    authors: "",
+    editors: "",
+    publisher: "",
+    published: "",
+    isbn: "",
+    description: "",
+    table_of_contents: "",
+  });
+  const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
+  const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,6 +110,23 @@ export default function BooksPage() {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (editingBook) {
+      setEditForm({
+        title: editingBook.title || "",
+        authors: editingBook.authors || "",
+        editors: editingBook.editors || "",
+        publisher: editingBook.publisher || "",
+        published: editingBook.published?.toString() || "",
+        isbn: editingBook.isbn || "",
+        description: editingBook.description || "",
+        table_of_contents: editingBook.table_of_contents || "",
+      });
+      setEditPdfFile(null);
+      setEditCoverFile(null);
+    }
+  }, [editingBook]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -160,121 +205,262 @@ export default function BooksPage() {
     }
   };
 
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user?.accessToken) return;
+
+    if (!addForm.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const formData = new FormData();
+      formData.append("title", addForm.title);
+      formData.append("authors", addForm.authors);
+      formData.append("editors", addForm.editors);
+      formData.append("publisher", addForm.publisher);
+      formData.append("published", addForm.published);
+      formData.append("isbn", addForm.isbn);
+      formData.append("description", addForm.description);
+      formData.append("table_of_contents", addForm.table_of_contents);
+      if (pdfFile) formData.append("pdf_link", pdfFile);
+      if (coverFile) formData.append("cover_link", coverFile);
+
+      await bookService.dashboardCreate(session.user.accessToken, formData);
+      toast.success("Book added successfully");
+      setIsAddDialogOpen(false);
+      setAddForm({
+        title: "",
+        authors: "",
+        editors: "",
+        publisher: "",
+        published: "",
+        isbn: "",
+        description: "",
+        table_of_contents: "",
+      });
+      setPdfFile(null);
+      setCoverFile(null);
+      refetchBooks();
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to add book");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user?.accessToken || !editingBook) return;
+
+    if (!editForm.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    setIsEditing(true);
+    try {
+      const formData = new FormData();
+      formData.append("title", editForm.title);
+      formData.append("authors", editForm.authors);
+      formData.append("editors", editForm.editors);
+      formData.append("publisher", editForm.publisher);
+      formData.append("published", editForm.published);
+      formData.append("isbn", editForm.isbn);
+      formData.append("description", editForm.description);
+      formData.append("table_of_contents", editForm.table_of_contents);
+      if (editPdfFile) formData.append("pdf_link", editPdfFile);
+      if (editCoverFile) formData.append("cover_link", editCoverFile);
+
+      await bookService.dashboardUpdate(
+        session.user.accessToken,
+        editingBook.id,
+        formData
+      );
+      toast.success("Book updated successfully");
+      setEditingBook(null);
+      refetchBooks();
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to update book");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Book List</h1>
-        <Dialog>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-violet-600 hover:bg-violet-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Book
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="max-w-6xl max-h-[90vh] overflow-y-auto"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold text-gray-900">
                 Add New Book
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                Fill in the form to add a new book
+              </DialogDescription>
             </DialogHeader>
-            <form className="grid grid-cols-2 gap-6 mt-4">
+            <form
+              onSubmit={handleAddSubmit}
+              className="grid grid-cols-2 gap-6 mt-4"
+            >
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="add-title">Title *</Label>
                   <Input
-                    id="title"
+                    id="add-title"
                     placeholder="e.g., Digital Economics"
                     className="mt-1.5"
+                    value={addForm.title}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, title: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="authors">Authors</Label>
+                  <Label htmlFor="add-authors">Authors</Label>
                   <Input
-                    id="authors"
+                    id="add-authors"
                     placeholder="e.g., John Doe; Jane Smith"
                     className="mt-1.5"
+                    value={addForm.authors}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, authors: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="editors">Editor</Label>
+                  <Label htmlFor="add-editors">Editor</Label>
                   <Input
-                    id="editors"
+                    id="add-editors"
                     placeholder="e.g., Michael Brown; Sarah Lee"
                     className="mt-1.5"
+                    value={addForm.editors}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, editors: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="publisher">Publisher</Label>
+                  <Label htmlFor="add-publisher">Publisher</Label>
                   <Input
-                    id="publisher"
+                    id="add-publisher"
                     placeholder="e.g., Springer Nature"
                     className="mt-1.5"
+                    value={addForm.publisher}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, publisher: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="year">Publication Year</Label>
+                  <Label htmlFor="add-year">Publication Year</Label>
                   <Input
-                    id="year"
+                    id="add-year"
                     placeholder="e.g., 2024"
                     className="mt-1.5"
+                    value={addForm.published}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, published: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="isbn">ISBN</Label>
+                  <Label htmlFor="add-isbn">ISBN</Label>
                   <Input
-                    id="isbn"
-                    placeholder="e.g., 978-3-16-148410-0"
+                    id="add-isbn"
+                    placeholder="e.g., 9783161484100"
                     className="mt-1.5"
+                    value={addForm.isbn}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, isbn: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="bookFile">Book File</Label>
+                  <Label htmlFor="add-bookFile">Book File (PDF)</Label>
                   <Input
-                    id="bookFile"
+                    id="add-bookFile"
                     type="file"
                     accept=".pdf"
                     className="mt-1.5 file:mr-4 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-violet-600 file:text-white hover:file:bg-violet-700 file:cursor-pointer"
+                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="coverImage">Cover Image</Label>
+                  <Label htmlFor="add-coverImage">Cover Image</Label>
                   <Input
-                    id="coverImage"
+                    id="add-coverImage"
                     type="file"
                     accept="image/*"
                     className="mt-1.5 file:mr-4 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-violet-600 file:text-white hover:file:bg-violet-700 file:cursor-pointer"
+                    onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
                   />
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="add-description">Description</Label>
                   <Textarea
-                    id="description"
+                    id="add-description"
                     placeholder="Write book description here"
                     className="mt-1.5 min-h-[180px] resize-none"
+                    value={addForm.description}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, description: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="toc">Table of Contents</Label>
+                  <Label htmlFor="add-toc">Table of Contents</Label>
                   <Textarea
-                    id="toc"
+                    id="add-toc"
                     placeholder="Write table of contents here"
                     className="mt-1.5 min-h-[180px] resize-y"
+                    value={addForm.table_of_contents}
+                    onChange={(e) =>
+                      setAddForm({
+                        ...addForm,
+                        table_of_contents: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
               <div className="col-span-2 flex justify-end gap-2 pt-4">
-                <DialogTrigger asChild>
-                  <Button type="button" variant="outline">
-                    Cancel
-                  </Button>
-                </DialogTrigger>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
                 <Button
                   type="submit"
                   className="bg-violet-600 hover:bg-violet-700 text-white"
+                  disabled={isAdding}
                 >
-                  Save
+                  {isAdding ? "Saving..." : "Save"}
                 </Button>
               </div>
             </form>
@@ -393,6 +579,9 @@ export default function BooksPage() {
                             <DialogTitle className="text-lg font-semibold text-gray-900">
                               Book Details
                             </DialogTitle>
+                            <DialogDescription className="sr-only">
+                              View book details
+                            </DialogDescription>
                           </DialogHeader>
                           <div className="flex gap-4 mt-2">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -569,74 +758,108 @@ export default function BooksPage() {
             <DialogTitle className="text-lg font-semibold text-gray-900">
               Edit Book
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Edit book details
+            </DialogDescription>
           </DialogHeader>
           {editingBook && (
-            <form className="grid grid-cols-2 gap-6 mt-4">
+            <form
+              onSubmit={handleEditSubmit}
+              className="grid grid-cols-2 gap-6 mt-4"
+            >
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="edit-title">Title</Label>
+                  <Label htmlFor="edit-title">Title *</Label>
                   <Input
                     id="edit-title"
-                    defaultValue={editingBook.title}
                     className="mt-1.5"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, title: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-authors">Authors</Label>
                   <Input
                     id="edit-authors"
-                    defaultValue={editingBook.authors}
                     className="mt-1.5"
+                    value={editForm.authors}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, authors: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-editors">Editor</Label>
                   <Input
                     id="edit-editors"
-                    defaultValue={editingBook.editors}
                     className="mt-1.5"
+                    value={editForm.editors}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, editors: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-publisher">Publisher</Label>
                   <Input
                     id="edit-publisher"
-                    defaultValue={editingBook.publisher}
                     className="mt-1.5"
+                    value={editForm.publisher}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, publisher: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-year">Publication Year</Label>
                   <Input
                     id="edit-year"
-                    defaultValue={editingBook.published}
                     className="mt-1.5"
+                    value={editForm.published}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, published: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-isbn">ISBN</Label>
                   <Input
                     id="edit-isbn"
-                    defaultValue={editingBook.isbn}
                     className="mt-1.5"
+                    value={editForm.isbn}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, isbn: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-bookFile">Book File</Label>
+                  <Label htmlFor="edit-bookFile">
+                    Book File (PDF) - Leave empty to keep current
+                  </Label>
                   <Input
                     id="edit-bookFile"
                     type="file"
                     accept=".pdf"
                     className="mt-1.5 file:mr-4 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-violet-600 file:text-white hover:file:bg-violet-700 file:cursor-pointer"
+                    onChange={(e) =>
+                      setEditPdfFile(e.target.files?.[0] || null)
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-coverImage">Cover Image</Label>
+                  <Label htmlFor="edit-coverImage">
+                    Cover Image - Leave empty to keep current
+                  </Label>
                   <Input
                     id="edit-coverImage"
                     type="file"
                     accept="image/*"
                     className="mt-1.5 file:mr-4 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-violet-600 file:text-white hover:file:bg-violet-700 file:cursor-pointer"
+                    onChange={(e) =>
+                      setEditCoverFile(e.target.files?.[0] || null)
+                    }
                   />
                 </div>
               </div>
@@ -645,16 +868,25 @@ export default function BooksPage() {
                   <Label htmlFor="edit-description">Description</Label>
                   <Textarea
                     id="edit-description"
-                    defaultValue={editingBook.description}
                     className="mt-1.5 min-h-[180px] resize-none"
+                    value={editForm.description}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, description: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-toc">Table of Contents</Label>
                   <Textarea
                     id="edit-toc"
-                    defaultValue={editingBook.table_of_contents}
                     className="mt-1.5 min-h-[180px] resize-y"
+                    value={editForm.table_of_contents}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        table_of_contents: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -669,8 +901,9 @@ export default function BooksPage() {
                 <Button
                   type="submit"
                   className="bg-violet-600 hover:bg-violet-700 text-white"
+                  disabled={isEditing}
                 >
-                  Save Changes
+                  {isEditing ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>

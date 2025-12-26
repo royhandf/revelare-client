@@ -7,8 +7,7 @@ A modern book discovery and management platform built with Next.js. Search for b
 - 🔍 **Book Search** - Search books with multiple similarity algorithms
 - 📚 **Book Details** - View comprehensive book information
 - 🔖 **Bookmarks** - Save and manage your favorite books
-- 🔐 **Authentication** - Secure sign in/sign up with NextAuth.js
-- 📱 **Responsive** - Mobile-friendly design
+- 🔐 **Authentication** - Secure sign in/sign up with NextAuth.js + Google OAuth
 
 ## Tech Stack
 

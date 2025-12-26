@@ -36,6 +36,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -62,6 +72,8 @@ export default function BooksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editingBook, setEditingBook] = useState<BookDetail | null>(null);
+  const [deletingBook, setDeletingBook] = useState<BookDetail | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -104,6 +116,47 @@ export default function BooksPage() {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+    }
+  };
+
+  const refetchBooks = async () => {
+    if (!session?.user?.accessToken) return;
+    try {
+      const response = await bookService.dashboardGetAll(
+        session.user.accessToken,
+        currentPage,
+        debouncedSearch
+      );
+      setBooks(response.data);
+      setTotalPages(response.total_pages);
+      setTotalBooks(response.total_books);
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!session?.user?.accessToken || !deletingBook) return;
+
+    setIsDeleting(true);
+    try {
+      await bookService.dashboardDelete(
+        session.user.accessToken,
+        deletingBook.id
+      );
+      toast.success("Book deleted successfully");
+      setDeletingBook(null);
+      refetchBooks();
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to delete book");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -417,7 +470,10 @@ export default function BooksPage() {
                             <Pencil className="h-4 w-4 text-yellow-500" />
                             <span>Edit</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                            onClick={() => setDeletingBook(book)}
+                          >
                             <Trash2 className="h-4 w-4 text-red-600" />
                             <span>Delete</span>
                           </DropdownMenuItem>
@@ -621,6 +677,31 @@ export default function BooksPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deletingBook}
+        onOpenChange={(open) => !open && setDeletingBook(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Book</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deletingBook?.title}&quot;?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

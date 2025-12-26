@@ -104,4 +104,19 @@ export const bookService = {
       throw error;
     }
   },
+
+  dashboardDelete: async (token: string, bookId: number): Promise<void> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      await axios.delete(`${BASE_URL}/api/dashboard/books/delete/${bookId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
 };

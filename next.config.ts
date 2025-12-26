@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "library.oapen.org",
       },
+      {
+        protocol: "https",
+        hostname: "api.revelare.royhandf.me",
+      },
     ],
   },
 };

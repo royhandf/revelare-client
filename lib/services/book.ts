@@ -47,6 +47,21 @@ export interface BookDetailResponse {
   status: string;
 }
 
+export interface DashboardBooksResponse {
+  current_page: number;
+  data: BookDetail[];
+  status: string;
+  total_books: number;
+  total_pages: number;
+}
+
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Unauthorized - Token expired");
+    this.name = "UnauthorizedError";
+  }
+}
+
 export const bookService = {
   search: async (params: SearchBooksParams): Promise<SearchBooksResponse> => {
     if (!BASE_URL) throw new Error("Server is not configured properly.");
@@ -67,5 +82,26 @@ export const bookService = {
 
     const response = await axios.get(`${BASE_URL}/api/books/${id}`);
     return response.data;
+  },
+
+  dashboardGetAll: async (
+    token: string,
+    page: number = 1,
+    search: string = ""
+  ): Promise<DashboardBooksResponse> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      const response = await axios.get(`${BASE_URL}/api/dashboard/books`, {
+        params: { page, search },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
   },
 };

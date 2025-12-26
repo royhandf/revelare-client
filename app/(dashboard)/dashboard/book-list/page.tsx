@@ -29,14 +29,6 @@ import {
   MoreVertical,
   Plus,
 } from "lucide-react";
-import { useState } from "react";
-import Image from "next/image";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -44,38 +36,76 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-const booksData = [
-  {
-    id: 1,
-    title: "The Domestic Savings Shortfall in Sub-Saharan Africa",
-    author: "James L. Smith",
-    editor: "Agustín Casagrande, Peter Colling",
-    publisher: "Springer Nature",
-    published: "2022",
-    isbn: "978-3-16-148410-0",
-    description:
-      "This book provides an overview of the domestic savings shortfall in Sub-Saharan Africa.",
-    table_of_contents: "-",
-    cover_image:
-      "https://library.oapen.org/bitstream/20.500.12657/102403/7/9780198932499_WEB.pdf.jpg",
-    url_download:
-      "https://library.oapen.org/bitstream/20.500.12657/102403/1/9780198932499_WEB.pdf",
-  },
-];
-
-type Book = (typeof booksData)[0];
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import {
+  bookService,
+  BookDetail,
+  UnauthorizedError,
+} from "@/lib/services/book";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function BooksPage() {
+  const { data: session } = useSession();
+  const [books, setBooks] = useState<BookDetail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBooks, setTotalBooks] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [editingBook, setEditingBook] = useState<BookDetail | null>(null);
 
-  const filteredBooks = booksData.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.editor.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      if (!session?.user?.accessToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await bookService.dashboardGetAll(
+          session.user.accessToken,
+          currentPage,
+          debouncedSearch
+        );
+        setBooks(response.data);
+        setTotalPages(response.total_pages);
+        setTotalBooks(response.total_books);
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          signOut({ callbackUrl: "/signin" });
+          return;
+        }
+        toast.error("Failed to fetch books");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBooks();
+  }, [session?.user?.accessToken, currentPage, debouncedSearch]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -210,8 +240,8 @@ export default function BooksPage() {
         />
       </div>
 
-      <div className="border rounded-lg bg-white">
-        <Table>
+      <div className="border rounded-lg bg-white overflow-x-auto">
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="bg-gray-50 hover:bg-gray-50">
               <TableHead className="font-semibold text-gray-700 w-16">
@@ -238,7 +268,16 @@ export default function BooksPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredBooks.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin h-5 w-5 border-2 border-violet-600 border-t-transparent rounded-full" />
+                    <span className="text-gray-500">Loading books...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : books.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
@@ -248,33 +287,38 @@ export default function BooksPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredBooks.map((book, index) => (
+              books.map((book, index) => (
                 <TableRow key={book.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium text-gray-900 align-middle">
-                    {index + 1}
+                    {(currentPage - 1) * 10 + index + 1}
                   </TableCell>
                   <TableCell className="align-middle">
                     <div className="flex items-center gap-3">
-                      <Image
-                        src={book.cover_image}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={book.cover_link || "/images/placeholder-book.png"}
                         alt={book.title}
                         width={64}
-                        height={64}
-                        className="object-cover rounded shadow-sm flex-shrink-0"
+                        height={80}
+                        className="object-cover rounded shadow-sm flex-shrink-0 w-16 h-20"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "/images/placeholder-book.png";
+                        }}
                       />
-                      <span className="text-gray-900 font-medium leading-snug">
+                      <span className="text-gray-900 font-medium leading-snug line-clamp-2">
                         {book.title}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-gray-700 align-middle">
-                    {book.author}
+                  <TableCell className="text-gray-700 align-middle max-w-[150px]">
+                    <span className="line-clamp-2">{book.authors || "-"}</span>
                   </TableCell>
-                  <TableCell className="text-gray-700 align-middle">
-                    {book.editor || "-"}
+                  <TableCell className="text-gray-700 align-middle max-w-[150px]">
+                    <span className="line-clamp-2">{book.editors || "-"}</span>
                   </TableCell>
-                  <TableCell className="text-gray-700 align-middle">
-                    {book.publisher}
+                  <TableCell className="text-gray-700 align-middle max-w-[120px]">
+                    <span className="line-clamp-2">{book.publisher}</span>
                   </TableCell>
                   <TableCell className="text-gray-700 align-middle">
                     {book.published}
@@ -291,26 +335,34 @@ export default function BooksPage() {
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-lg">
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle className="text-lg font-semibold text-gray-900">
                               Book Details
                             </DialogTitle>
                           </DialogHeader>
                           <div className="flex gap-4 mt-2">
-                            <Image
-                              src={book.cover_image}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={
+                                book.cover_link ||
+                                "/images/placeholder-book.png"
+                              }
                               alt={book.title}
                               width={100}
                               height={150}
-                              className="object-cover rounded shadow-sm flex-shrink-0"
+                              className="object-cover rounded shadow-sm flex-shrink-0 w-24 h-36"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "/images/placeholder-book.png";
+                              }}
                             />
                             <div className="flex-1">
                               <h3 className="font-semibold text-gray-900 leading-snug">
                                 {book.title}
                               </h3>
                               <p className="text-sm text-gray-500 mt-1">
-                                {book.author}
+                                {book.authors || "-"}
                               </p>
                             </div>
                           </div>
@@ -326,7 +378,7 @@ export default function BooksPage() {
                                 Description
                               </h4>
                               <p className="text-gray-700 text-sm leading-relaxed">
-                                {book.description}
+                                {book.description || "-"}
                               </p>
                             </div>
                             <div>
@@ -334,7 +386,7 @@ export default function BooksPage() {
                                 Table of Contents
                               </h4>
                               <p className="text-gray-700 text-sm">
-                                {book.table_of_contents}
+                                {book.table_of_contents || "-"}
                               </p>
                             </div>
                           </div>
@@ -353,9 +405,7 @@ export default function BooksPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             className="cursor-pointer"
-                            onClick={() =>
-                              window.open(book.url_download, "_blank")
-                            }
+                            onClick={() => window.open(book.pdf_link, "_blank")}
                           >
                             <Download className="h-4 w-4 text-green-500" />
                             <span>Download</span>
@@ -384,34 +434,71 @@ export default function BooksPage() {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          Showing {filteredBooks.length > 0 ? "1" : "0"} -{" "}
-          {filteredBooks.length} of {booksData.length}
+          Showing {books.length > 0 ? (currentPage - 1) * 10 + 1 : 0} -{" "}
+          {Math.min(currentPage * 10, totalBooks)} of {totalBooks}
         </div>
-        <Pagination className="w-auto mx-0 justify-end">
-          <PaginationContent className="gap-1">
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                className="h-8 text-sm cursor-not-allowed opacity-50"
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink
-                href="#"
-                isActive
-                className="h-8 w-8 text-sm bg-violet-600 text-white hover:bg-violet-700 border-violet-600"
-              >
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                className="h-8 text-sm cursor-not-allowed opacity-50"
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        {totalPages > 1 && (
+          <Pagination className="w-auto mx-0 justify-end">
+            <PaginationContent className="gap-1">
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage - 1);
+                  }}
+                  className={cn(
+                    "h-8 text-sm",
+                    currentPage === 1 &&
+                      "cursor-not-allowed opacity-50 pointer-events-none"
+                  )}
+                />
+              </PaginationItem>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let page = i + 1;
+                if (totalPages > 5) {
+                  if (currentPage <= 3) page = i + 1;
+                  else if (currentPage >= totalPages - 2)
+                    page = totalPages - 4 + i;
+                  else page = currentPage - 2 + i;
+                }
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                      isActive={currentPage === page}
+                      className={cn(
+                        "h-8 w-8 text-sm",
+                        currentPage === page &&
+                          "bg-violet-600 text-white hover:bg-violet-700 border-violet-600"
+                      )}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage + 1);
+                  }}
+                  className={cn(
+                    "h-8 text-sm",
+                    currentPage === totalPages &&
+                      "cursor-not-allowed opacity-50 pointer-events-none"
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
       <Dialog
@@ -442,7 +529,7 @@ export default function BooksPage() {
                   <Label htmlFor="edit-authors">Authors</Label>
                   <Input
                     id="edit-authors"
-                    defaultValue={editingBook.author}
+                    defaultValue={editingBook.authors}
                     className="mt-1.5"
                   />
                 </div>
@@ -450,7 +537,7 @@ export default function BooksPage() {
                   <Label htmlFor="edit-editors">Editor</Label>
                   <Input
                     id="edit-editors"
-                    defaultValue={editingBook.editor}
+                    defaultValue={editingBook.editors}
                     className="mt-1.5"
                   />
                 </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import {
   Search,
   BookX,
@@ -64,7 +65,7 @@ function SimilarityBadge({ value }: { value: number }) {
   );
 }
 
-export default function BookListPage() {
+function BookListContent() {
   const searchParams = useSearchParams();
 
   const [scenario, setScenario] = useState("");
@@ -290,5 +291,19 @@ export default function BookListPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function BookListPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        </div>
+      }
+    >
+      <BookListContent />
+    </Suspense>
   );
 }

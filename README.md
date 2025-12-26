@@ -11,7 +11,7 @@ A modern book discovery and management platform built with Next.js. Search for b
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Authentication**: NextAuth.js

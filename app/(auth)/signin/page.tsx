@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,10 @@ export default function LoginPage() {
       toast.error("Email or password is incorrect");
     } else {
       toast.success("Login successful");
-      router.push("/");
+      const session = await getSession();
+      session?.user?.role === "admin"
+        ? router.push("/dashboard")
+        : router.push("/");
       router.refresh();
     }
   };

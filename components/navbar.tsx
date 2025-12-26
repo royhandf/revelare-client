@@ -4,14 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Bookmark, LogOut } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 
 export function Navbar() {
@@ -29,41 +32,37 @@ export function Navbar() {
           <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
         ) : session?.user ? (
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 outline-none hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-medium">
-                {getInitials(session.user.name || "U")}
-              </div>
-              <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {session.user.name}
-              </span>
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/profil"
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <User className="h-4 w-4" />
-                  Profil
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/bookmark"
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Bookmark className="h-4 w-4" />
-                  Bookmark
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="flex items-center gap-2 text-red-600 cursor-pointer"
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-8 w-auto px-1.5 gap-1.5 flex items-center"
               >
-                <LogOut className="h-4 w-4" />
-                Logout
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-teal-500 text-white">
+                    {getInitials(session.user.name || "U")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:inline text-sm font-medium text-gray-600">
+                  {session.user.name}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {session.user.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {session.user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Bookmark</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+                Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

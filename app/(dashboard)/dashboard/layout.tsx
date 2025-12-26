@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import { cn, getInitials } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -84,16 +84,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-8 w-auto px-1.5 space-x-2 flex items-center"
+                className="relative h-8 w-auto px-1.5 gap-1.5 flex items-center"
               >
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-teal-500 text-white">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline font-normal text-gray-600">
+                <span className="hidden sm:inline text-sm font-medium text-gray-600">
                   {userName}
                 </span>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -105,11 +106,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Log out</DropdownMenuItem>
             </DropdownMenuContent>

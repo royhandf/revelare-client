@@ -25,6 +25,7 @@ export default function RootLayout({
           {children}
           <Toaster
             position="top-center"
+            duration={3000}
             toastOptions={{
               classNames: {
                 toast: "bg-white border border-gray-200 shadow-lg",

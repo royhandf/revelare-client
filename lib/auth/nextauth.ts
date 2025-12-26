@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { authService } from "@/lib/services/auth";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,31 +17,26 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_REVELARE_API_URL}/api/signin`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials?.email,
-              password: credentials?.password,
-            }),
+        try {
+          const data = await authService.signin({
+            email: credentials?.email || "",
+            password: credentials?.password || "",
+          });
+
+          if (data.status === "success" && data.user) {
+            return {
+              id: String(data.user.id),
+              name: data.user.name,
+              email: data.user.email,
+              role: data.user.role,
+              accessToken: data.token,
+            };
           }
-        );
 
-        const data = await res.json();
-
-        if (data.status === "success" && data.user) {
-          return {
-            id: String(data.user.id),
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            accessToken: data.token,
-          };
+          return null;
+        } catch {
+          return null;
         }
-
-        return null;
       },
     }),
   ],
@@ -48,11 +44,26 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.accessToken = user.accessToken;
+      }
+
+      if (account?.provider === "google" && token.email && token.name) {
+        const data = await authService
+          .googleAuth({
+            email: token.email,
+            name: token.name,
+          })
+          .catch(() => null);
+
+        if (data?.status === "success" && data.user) {
+          token.id = String(data.user.id);
+          token.role = data.user.role;
+          token.accessToken = data.token;
+        }
       }
 
       return token;

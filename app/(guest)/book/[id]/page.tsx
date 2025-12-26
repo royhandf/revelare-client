@@ -4,11 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { bookService, BookDetail, Book } from "@/lib/services/book";
-import { ArrowLeft, Download, Bookmark, BookX } from "lucide-react";
+import {
+  bookService,
+  bookmarkService,
+  BookDetail,
+  Book,
+  UnauthorizedError,
+} from "@/lib/services/book";
+import { ArrowLeft, Download, Bookmark, BookX, Loader2 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, FreeMode } from "swiper/modules";
+import { toast } from "sonner";
 import "swiper/css";
 import "swiper/css/free-mode";
 
@@ -21,13 +29,42 @@ function getAuthorDisplay(book: BookDetail): string {
 export default function BookDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [book, setBook] = useState<BookDetail | null>(null);
   const [similarBooks, setSimilarBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const searchQuery = searchParams.get("q") || "";
   const scenario = searchParams.get("scenario") || "3";
+
+  const handleSaveBookmark = async () => {
+    if (!session?.user) {
+      toast.error("Please sign in to save books");
+      return;
+    }
+
+    if (!book) return;
+
+    setIsSaving(true);
+    try {
+      await bookmarkService.add(
+        session.user.accessToken,
+        Number(session.user.id),
+        book.id
+      );
+      toast.success("Book saved to bookmarks");
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        signOut({ callbackUrl: "/signin" });
+        return;
+      }
+      toast.error("Failed to save bookmark");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -199,9 +236,15 @@ export default function BookDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full border-gray-200 h-11"
+                  onClick={handleSaveBookmark}
+                  disabled={isSaving}
                 >
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Save
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Bookmark className="h-4 w-4 mr-2" />
+                  )}
+                  {isSaving ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>

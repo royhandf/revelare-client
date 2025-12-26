@@ -173,3 +173,78 @@ export const bookService = {
     }
   },
 };
+
+export interface BookmarkItem {
+  id: number;
+  user_id: number;
+  book_id: number;
+  book_title: string | null;
+  book_cover: string | null;
+  created_at: string;
+}
+
+export interface BookmarkListResponse {
+  status: string;
+  data: BookmarkItem[];
+}
+
+export const bookmarkService = {
+  add: async (token: string, userId: number, bookId: number): Promise<void> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      await axios.post(
+        `${BASE_URL}/api/bookmarks/add`,
+        { user_id: userId, book_id: bookId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
+
+  getByUser: async (
+    token: string,
+    userId: number
+  ): Promise<BookmarkListResponse> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      const response = await axios.get(`${BASE_URL}/api/bookmarks/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
+
+  delete: async (token: string, bookmarkId: number): Promise<void> => {
+    if (!BASE_URL) throw new Error("Server is not configured properly.");
+
+    try {
+      await axios.delete(`${BASE_URL}/api/bookmarks/delete/${bookmarkId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new UnauthorizedError();
+      }
+      throw error;
+    }
+  },
+};

@@ -60,7 +60,9 @@ export function Navbar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Bookmark</DropdownMenuItem>
+              <Link href="/bookmark">
+                <DropdownMenuItem>Bookmark</DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
                 Log out
               </DropdownMenuItem>

@@ -28,6 +28,7 @@ import {
   Download,
   MoreVertical,
   Plus,
+  BookOpen,
 } from "lucide-react";
 import {
   Dialog,
@@ -62,6 +63,42 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function BookCoverImage({
+  src,
+  alt,
+  className,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError || !src) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center bg-gradient-to-br from-violet-100 to-violet-200 rounded",
+          className
+        )}
+      >
+        <BookOpen className="h-8 w-8 text-violet-400 mb-1" />
+        <span className="text-[10px] text-violet-500">No Cover</span>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      className={cn("object-cover rounded shadow-sm", className)}
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 export default function BooksPage() {
   const { data: session } = useSession();
@@ -533,17 +570,10 @@ export default function BooksPage() {
                   </TableCell>
                   <TableCell className="align-middle">
                     <div className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={book.cover_link || "/images/placeholder-book.png"}
+                      <BookCoverImage
+                        src={book.cover_link}
                         alt={book.title}
-                        width={64}
-                        height={80}
-                        className="object-cover rounded shadow-sm flex-shrink-0 w-16 h-20"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "/images/placeholder-book.png";
-                        }}
+                        className="flex-shrink-0 w-16 h-20"
                       />
                       <span className="text-gray-900 font-medium leading-snug line-clamp-2">
                         {book.title}
@@ -584,20 +614,10 @@ export default function BooksPage() {
                             </DialogDescription>
                           </DialogHeader>
                           <div className="flex gap-4 mt-2">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={
-                                book.cover_link ||
-                                "/images/placeholder-book.png"
-                              }
+                            <BookCoverImage
+                              src={book.cover_link}
                               alt={book.title}
-                              width={100}
-                              height={150}
-                              className="object-cover rounded shadow-sm flex-shrink-0 w-24 h-36"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  "/images/placeholder-book.png";
-                              }}
+                              className="flex-shrink-0 w-24 h-36"
                             />
                             <div className="flex-1">
                               <h3 className="font-semibold text-gray-900 leading-snug">

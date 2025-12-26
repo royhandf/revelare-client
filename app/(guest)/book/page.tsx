@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, BookX, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  BookX,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,6 +22,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
 import { bookService, Book } from "@/lib/services/book";
+
+function BookCoverImage({ src, alt }: { src: string; alt: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError || !src) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-100 to-violet-200 rounded-md">
+        <BookOpen className="h-16 w-16 text-violet-400 mb-2" />
+        <span className="text-xs text-violet-500 text-center px-2">
+          No Cover
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={200}
+      height={267}
+      className="max-h-full w-auto drop-shadow-sm group-hover:scale-105 transition-transform duration-200"
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 function SimilarityBadge({ value }: { value: number }) {
   const percentage = (value * 100).toFixed(0);
@@ -174,16 +206,7 @@ export default function BookListPage() {
               >
                 <Card className="h-full overflow-hidden border border-gray-200 hover:border-violet-400 hover:shadow-lg transition-all cursor-pointer">
                   <div className="h-64 bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-3">
-                    <Image
-                      src={book.cover}
-                      alt={book.title}
-                      width={200}
-                      height={267}
-                      className="max-h-full w-auto drop-shadow-sm group-hover:scale-105 transition-transform duration-200"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
+                    <BookCoverImage src={book.cover} alt={book.title} />
                   </div>
 
                   <CardContent className="p-3">

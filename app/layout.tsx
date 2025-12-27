@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,6 +10,17 @@ const fontSans = Roboto({
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
+
+export const metadata: Metadata = {
+  title: {
+    default: "Revelare",
+    template: "%s | Revelare",
+  },
+  description: "Discover and explore books with semantic search technology",
+  icons: {
+    icon: "/images/book.png",
+  },
+};
 
 export default function RootLayout({
   children,
